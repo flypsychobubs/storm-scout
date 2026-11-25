@@ -22,9 +22,9 @@ This produces `StormScout.3dsx` for homebrew launchers and `StormScout.elf` for 
 
 ## Gameplay and interface
 
-The upper screen presents the live radar, storm range, chase score, fuel, vehicle condition, probes, and signal status. The lower screen shows chase-radio guidance, mission status, and the latest dispatch. Storms drift as the chase continues. Samples restore a little fuel and vehicle condition; driving consumes fuel and entering a storm core damages the vehicle.
+The upper screen presents the live radar, storm range, chase score, fuel, vehicle condition, probes, and signal status. Its tile radar distinguishes clear road, rain bands, the storm core, and the player's vehicle. The lower screen shows chase-radio guidance, mission status, and the latest dispatch. Storms drift as the chase continues. Samples restore a little fuel and vehicle condition; driving consumes fuel and entering a storm core damages the vehicle.
 
-The game uses libctru's built-in text console and has no external assets or runtime files. It is a fictional game—never enter real storms, floodwater, or closed roads.
+The game uses libctru's built-in dual-screen text console and has no external assets or runtime files. It is a fictional game—never enter real storms, floodwater, or closed roads.
 
 ## Project layout
 

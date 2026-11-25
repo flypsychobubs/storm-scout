@@ -40,7 +40,7 @@ static void print_bar(int value) {
     int i;
     printf("[");
     for (i = 0; i < 10; ++i)
-        printf("%c", value > i * 10 ? '#' : '.');
+        printf("%c", value > i * 10 ? '#' : '-');
     printf("] %3d%%", value);
 }
 
@@ -67,43 +67,57 @@ static void start_game(void) {
     say("Dispatch: first supercell is on radar. Stay mobile!");
 }
 
+/* A compact, tile-based radar that fits the 3DS top-screen console. */
 static void draw_radar(void) {
     int x, y;
-    printf("                    N\n");
-    printf("          +---------------------+\n");
+    printf("                  N\n");
+    printf("       +---------------------------------+\n");
     for (y = 0; y < GRID_H; ++y) {
-        printf("          |");
+        printf("       |");
         for (x = 0; x < GRID_W; ++x) {
-            char cell = '.';
-            if (x == stormX && y == stormY) cell = 'X';
-            if (x == playerX && y == playerY) cell = 'V';
-            printf(" %c", cell);
+            int dx = abs(x - stormX);
+            int dy = abs(y - stormY);
+            if (x == playerX && y == playerY) {
+                printf("[V]");
+            } else if (x == stormX && y == stormY) {
+                printf("XXX");
+            } else if (dx <= 1 && dy <= 1) {
+                printf("~~~");
+            } else if (dx <= 2 && dy <= 2) {
+                printf(":::");
+            } else {
+                printf(" . ");
+            }
         }
-        printf(" |\n");
+        printf("|\n");
     }
-    printf("          +---------------------+\n");
-    printf("                    S\n");
-    printf("       V CHASER     X STORM CORE     . CLEAR\n");
+    printf("       +---------------------------------+\n");
+    printf("       V CHASER   X CORE   ~ STORM   : RAIN\n");
 }
 
 static void render_title(void) {
     consoleSelect(&conTop);
     consoleClear();
     printf("==================================================\n");
-    printf("\n\n");
-    printf("              .  *  .  *  .\n");
-    printf("          STORM  /\\  SCOUT\n");
-    printf("         FIELD OPERATIONS UNIT\n\n");
+    printf("\n");
+    printf("                 .  .  *  .  .\n");
+    printf("            .  .  .  /\\  .  .  .\n");
+    printf("          .       . /  \\ .       .\n");
+    printf("             .  .  /____\\  .\n");
+    printf("\n");
+    printf("               STORM SCOUT\n");
+    printf("          FIELD OPERATIONS UNIT\n");
+    printf("\n");
     printf("       TRACK THE CELL. SAMPLE THE STORM.\n");
     printf("       GET YOUR CREW HOME SAFE.\n\n");
-    printf("            [ FIVE-STORM CHASE ]\n\n\n");
+    printf("            [ FIVE-STORM CHASE ]\n\n");
     printf("          PRESS START TO DEPLOY\n");
-    printf("          PRESS SELECT TO QUIT\n\n");
+    printf("          PRESS SELECT TO QUIT\n");
     printf("==================================================\n");
 
     consoleSelect(&conBottom);
     consoleClear();
-    printf("+-------------------------------------- +\n");
+    printf("+---------------------------------------+\n");
     printf("|          CHASE TEAM FIELD GUIDE       |\n");
     printf("+---------------------------------------+\n\n");
     printf("  D-PAD    Drive the chase vehicle\n\n");
@@ -141,10 +155,10 @@ static void render_game(void) {
     printf("|              CHASE RADIO              |\n");
     printf("+---------------------------------------+\n\n");
     if (range == 0) {
-        printf("  WARNING: CORE OVERHEAD\n");
+        printf("  !!!  CORE OVERHEAD  !!!\n");
         printf("  Move clear to protect your vehicle.\n\n");
     } else if (range <= 1) {
-        printf("  TARGET IN SAMPLE RANGE\n");
+        printf("  >>> TARGET IN SAMPLE RANGE <<<\n");
         printf("  Press A to capture storm data.\n\n");
     } else if (range <= 3) {
         printf("  ROTATION DETECTED NEARBY\n");
