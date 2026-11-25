@@ -1,34 +1,34 @@
 # Storm Scout — Nintendo 3DS Homebrew
 
-A small, playable top-down storm-chasing game for Nintendo 3DS. Drive across the radar grid, follow a moving supercell, deploy probes near it, and capture storm data before you run out of fuel or vehicle condition.
+Storm Scout is a top-down storm-chasing game for Nintendo 3DS. Read the radar, drive the chase vehicle, deploy probes, and capture five storm samples before fuel or vehicle condition runs out.
 
 ## Build
 
-Requires devkitPro with the 3DS development tools (`devkitARM`, `libctru`, and `3ds_rules`). From the project directory, run:
+Requires devkitPro with devkitARM and libctru installed. From the project directory, run:
 
 ```sh
 make
 ```
 
-This produces `StormScout.3dsx` for homebrew launchers and `StormScout.elf` for debugging. To remove build outputs, run `make clean`.
+This produces `StormScout.3dsx` for homebrew launchers and `StormScout.elf` for debugging. Run `make clean` to remove build outputs.
 
 ## Controls
 
 - **D-pad:** Drive one tile (hold to keep moving)
-- **A:** Capture the storm when adjacent to its core
-- **B:** Deploy a probe when adjacent to the storm (limited supply; improves the next capture)
-- **START:** Begin a chase from the title screen, or restart after the run
+- **A:** Capture storm data when within one radar tile
+- **B:** Deploy a probe nearby for a score bonus
+- **START:** Begin a chase or restart after the run
 - **SELECT:** Quit
 
-## Gameplay
+## Gameplay and interface
 
-Chase and sample five storms. The storm drifts across the radar over time. Stay close to its core to capture it; the closer you are, the better the score. A successful capture restores a little fuel and vehicle condition. Driving costs fuel, and getting caught in the storm's core damages the vehicle. The run ends when you finish the five-storm campaign or your fuel/condition runs out.
+The upper screen presents the live radar, storm range, chase score, fuel, vehicle condition, probes, and signal status. The lower screen shows chase-radio guidance, mission status, and the latest dispatch. Storms drift as the chase continues. Samples restore a little fuel and vehicle condition; driving consumes fuel and entering a storm core damages the vehicle.
 
-The game uses libctru's built-in text console, so it has no external assets or extra runtime files.
+The game uses libctru's built-in text console and has no external assets or runtime files. It is a fictional game—never enter real storms, floodwater, or closed roads.
 
 ## Project layout
 
-- `source/main.c` — game loop, radar, controls, and campaign logic
+- `source/main.c` — game loop, dual-screen interface, radar, and campaign logic
 - `Makefile` — devkitPro/libctru build configuration
 
 This project is distributed under GPL-3.0, matching the repository license.

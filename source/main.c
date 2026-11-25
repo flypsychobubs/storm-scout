@@ -8,6 +8,8 @@
 #define CAMPAIGN_STORMS 5
 #define MAX_PROBES 3
 
+static PrintConsole conTop;
+static PrintConsole conBottom;
 static int playerX, playerY;
 static int stormX, stormY;
 static int fuel, condition, score, stormsCaught, probes;
@@ -31,11 +33,18 @@ static int distance_to_storm(void) {
 
 static void say(const char *text) {
     snprintf(message, sizeof(message), "%s", text);
-    messageTimer = 150;
+    messageTimer = 180;
+}
+
+static void print_bar(int value) {
+    int i;
+    printf("[");
+    for (i = 0; i < 10; ++i)
+        printf("%c", value > i * 10 ? '#' : '.');
+    printf("] %3d%%", value);
 }
 
 static void spawn_storm(void) {
-    /* Keep storms away from the initial vehicle position. */
     do {
         stormX = 1 + rand() % (GRID_W - 2);
         stormY = 1 + rand() % (GRID_H - 2);
@@ -58,93 +67,132 @@ static void start_game(void) {
     say("Dispatch: first supercell is on radar. Stay mobile!");
 }
 
-static void draw_map(void) {
+static void draw_radar(void) {
     int x, y;
-    printf("       STORM SCOUT RADAR   |   RANGE %dx%d\n", GRID_W, GRID_H);
-    printf("       N ^       SENSORS: %d/5\n", stormsCaught);
-    printf("      +-----------+\n");
+    printf("                    N\n");
+    printf("          +---------------------+\n");
     for (y = 0; y < GRID_H; ++y) {
-        printf("      |");
+        printf("          |");
         for (x = 0; x < GRID_W; ++x) {
             char cell = '.';
             if (x == stormX && y == stormY) cell = 'X';
             if (x == playerX && y == playerY) cell = 'V';
-            printf("%c", cell);
+            printf(" %c", cell);
         }
-        printf("|\n");
+        printf(" |\n");
     }
-    printf("      +-----------+\n");
-    printf("      V vehicle   X storm core   . open road\n\n");
+    printf("          +---------------------+\n");
+    printf("                    S\n");
+    printf("       V CHASER     X STORM CORE     . CLEAR\n");
 }
 
 static void render_title(void) {
     consoleSelect(&conTop);
     consoleClear();
-    printf("\n\n\n");
-    printf("          S T O R M   S C O U T\n\n");
-    printf("       FIELD OPERATIONS / 3DS EDITION\n\n\n");
-    printf("       Track the supercell. Sample the storm.\n");
-    printf("       Bring your vehicle and crew home safely.\n\n\n");
-    printf("       Five storms. One chase team.\n\n");
-    printf("       Press START to begin\n");
-    printf("       Press SELECT to exit\n");
+    printf("==================================================\n");
+    printf("\n\n");
+    printf("              .  *  .  *  .\n");
+    printf("          STORM  /\\  SCOUT\n");
+    printf("         FIELD OPERATIONS UNIT\n\n");
+    printf("       TRACK THE CELL. SAMPLE THE STORM.\n");
+    printf("       GET YOUR CREW HOME SAFE.\n\n");
+    printf("            [ FIVE-STORM CHASE ]\n\n\n");
+    printf("          PRESS START TO DEPLOY\n");
+    printf("          PRESS SELECT TO QUIT\n\n");
+    printf("==================================================\n");
 
     consoleSelect(&conBottom);
     consoleClear();
-    printf("\n  FIELD GUIDE\n\n");
-    printf("  D-pad  Drive across the radar grid\n\n");
-    printf("  A      Capture data beside the storm\n\n");
-    printf("  B      Deploy a probe near the storm\n\n");
-    printf("  Storms drift as the chase continues.\n");
-    printf("  Stay close for a better sample, but\n");
-    printf("  avoid the dangerous storm core.\n");
+    printf("+-------------------------------------- +\n");
+    printf("|          CHASE TEAM FIELD GUIDE       |\n");
+    printf("+---------------------------------------+\n\n");
+    printf("  D-PAD    Drive the chase vehicle\n\n");
+    printf("  A        Capture storm data nearby\n\n");
+    printf("  B        Deploy a probe for bonus data\n\n");
+    printf("  SELECT   Exit the mission\n\n");
+    printf("  STORM SAFETY\n");
+    printf("  Avoid the core, conserve fuel, and\n");
+    printf("  keep the vehicle in good condition.\n\n");
+    printf("  Fictional game: never enter real\n");
+    printf("  storms, floodwater, or closed roads.\n");
 }
 
 static void render_game(void) {
+    int range = distance_to_storm();
     consoleSelect(&conTop);
     consoleClear();
-    draw_map();
-    printf("CHASER %d/5     SCORE %04d\n", stormsCaught + 1, score);
-    printf("FUEL      [");
-    for (int i = 0; i < 10; ++i) printf("%c", fuel > i * 10 ? '#' : '-');
-    printf("] %3d%%\n", fuel);
-    printf("VEHICLE   [");
-    for (int i = 0; i < 10; ++i) printf("%c", condition > i * 10 ? '#' : '-');
-    printf("] %3d%%\n", condition);
-    printf("PROBES %d   STORM RANGE %d\n", probes, distance_to_storm());
+    printf("==================================================\n");
+    printf(" STORM SCOUT // LIVE RADAR       CASE %d / %d\n", stormsCaught + 1, CAMPAIGN_STORMS);
+    printf(" SCORE %05d                     RANGE %02d\n", score, range);
+    printf("--------------------------------------------------\n");
+    draw_radar();
+    printf("--------------------------------------------------\n");
+    printf(" FUEL      ");
+    print_bar(fuel);
+    printf("\n VEHICLE   ");
+    print_bar(condition);
+    printf("\n PROBES %d/%d       SIGNAL: %s\n", probes, MAX_PROBES,
+           range <= 2 ? "LOCKED" : "SEARCHING");
+    printf("==================================================\n");
 
     consoleSelect(&conBottom);
     consoleClear();
-    printf("\n  CHASE RADIO\n\n");
-    if (distance_to_storm() == 0)
-        printf("  CORE OVERHEAD! Move clear\n  before the vehicle takes more damage.\n\n");
-    else if (distance_to_storm() <= 2)
-        printf("  Strong rotation nearby.\n  A capture is in range.\n\n");
-    else
-        printf("  Searching for the cell...\n  Follow the radar and close in.\n\n");
-    printf("  %s\n\n", probeDeployed ? "Probe deployed - capture bonus ready." : "Probe status: ready to deploy.");
-    if (messageTimer > 0) printf("  DISPATCH: %s\n", message);
-    printf("\n  D-pad: drive   A: capture\n  B: deploy probe   SELECT: exit\n");
+    printf("+---------------------------------------+\n");
+    printf("|              CHASE RADIO              |\n");
+    printf("+---------------------------------------+\n\n");
+    if (range == 0) {
+        printf("  WARNING: CORE OVERHEAD\n");
+        printf("  Move clear to protect your vehicle.\n\n");
+    } else if (range <= 1) {
+        printf("  TARGET IN SAMPLE RANGE\n");
+        printf("  Press A to capture storm data.\n\n");
+    } else if (range <= 3) {
+        printf("  ROTATION DETECTED NEARBY\n");
+        printf("  Close in carefully for a sample.\n\n");
+    } else {
+        printf("  SEARCHING FOR THE SUPERCELL\n");
+        printf("  Follow the radar signal.\n\n");
+    }
+    printf("  FIELD STATUS\n");
+    printf("  Probe: %s\n", probeDeployed ? "DEPLOYED - capture bonus ready" :
+           (probes > 0 ? "ready for deployment" : "no probes remaining"));
+    printf("  Samples secured: %d / %d\n\n", stormsCaught, CAMPAIGN_STORMS);
+    printf("  DISPATCH\n");
+    if (messageTimer > 0) printf("  %.37s\n", message);
+    else printf("  Awaiting field report...\n");
+    printf("\n  D-PAD DRIVE   A SAMPLE   B PROBE\n");
 }
 
 static void render_results(void) {
     consoleSelect(&conTop);
     consoleClear();
-    printf("\n\n\n             CHASE REPORT\n\n\n");
-    if (stormsCaught == CAMPAIGN_STORMS)
-        printf("       OUTSTANDING FIELD WORK!\n\n       All five storms sampled.\n");
-    else
-        printf("       CHASE ENDED\n\n       The vehicle can go no farther.\n");
-    printf("\n       STORMS SAMPLED: %d / %d\n", stormsCaught, CAMPAIGN_STORMS);
-    printf("       FINAL SCORE:   %04d\n", score);
-    printf("       FUEL LEFT:     %d%%\n", fuel);
-    printf("       VEHICLE:       %d%%\n\n", condition);
-    printf("       START: chase again   SELECT: quit\n");
+    printf("==================================================\n");
+    printf("                  CHASE REPORT\n");
+    printf("--------------------------------------------------\n\n");
+    if (stormsCaught == CAMPAIGN_STORMS) {
+        printf("          EXCEPTIONAL FIELD WORK!\n\n");
+        printf("       All five storm samples secured.\n");
+    } else {
+        printf("              CHASE COMPLETE\n\n");
+        printf("       The vehicle can go no farther.\n");
+    }
+    printf("\n       STORMS SAMPLED   %d / %d\n", stormsCaught, CAMPAIGN_STORMS);
+    printf("       FINAL SCORE      %05d\n", score);
+    printf("       FUEL REMAINING   %d%%\n", fuel);
+    printf("       VEHICLE STATUS   %d%%\n\n", condition);
+    printf("       START: redeploy   SELECT: quit\n");
+    printf("==================================================\n");
 
     consoleSelect(&conBottom);
     consoleClear();
-    printf("\n  Thanks for chasing responsibly.\n\n");
-    printf("  Storm Scout is a fictional game.\n  Never enter a real storm or flood zone.\n");
+    printf("+---------------------------------------+\n");
+    printf("|            MISSION DEBRIEF            |\n");
+    printf("+---------------------------------------+\n\n");
+    printf("  Chase team, report safely to base.\n\n");
+    printf("  Storm Scout is a fictional game.\n");
+    printf("  Never enter real storm or flood zones.\n\n\n");
+    printf("  Press START to launch another chase.\n");
+    printf("  Press SELECT to exit.\n");
 }
 
 static void move_vehicle(int dx, int dy) {
@@ -160,7 +208,8 @@ static void move_vehicle(int dx, int dy) {
         condition = clampi(condition - 12, 0, 100);
         say("Core impact! Vehicle condition -12. Move out now!");
     } else {
-        say(distance_to_storm() < oldDistance ? "Closing in on the storm." : "Driving. Keep an eye on fuel.");
+        say(distance_to_storm() < oldDistance ? "Closing in on the storm." :
+            "Driving. Keep an eye on fuel.");
     }
     fuel = clampi(fuel - 1, 0, 100);
 }
@@ -168,8 +217,9 @@ static void move_vehicle(int dx, int dy) {
 static void capture_storm(void) {
     int range = distance_to_storm();
     int award;
+    char text[72];
     if (range > 1) {
-        say("Too far for a safe sample. Get within one radar tile.");
+        say("Too far for a sample. Get within one radar tile.");
         return;
     }
     award = range == 0 ? 150 : 250;
@@ -185,8 +235,7 @@ static void capture_storm(void) {
         return;
     }
     spawn_storm();
-    char text[72];
-    snprintf(text, sizeof(text), "Sample secured! +%d points. Next cell on radar.", award);
+    snprintf(text, sizeof(text), "Sample secured! +%d points. New cell tracked.", award);
     say(text);
 }
 
@@ -196,11 +245,11 @@ static void deploy_probe(void) {
         return;
     }
     if (distance_to_storm() > 1) {
-        say("Too far to deploy. Move within one tile of the storm.");
+        say("Too far to deploy. Move within one tile.");
         return;
     }
     if (probeDeployed) {
-        say("Probe is already deployed. Press A to capture the storm.");
+        say("Probe is already deployed. Press A to capture.");
         return;
     }
     probes--;
@@ -216,9 +265,11 @@ int main(void) {
     gameState = 0;
 
     while (aptMainLoop()) {
+        u32 down;
+        u32 held;
         hidScanInput();
-        u32 down = hidKeysDown();
-        u32 held = hidKeysHeld();
+        down = hidKeysDown();
+        held = hidKeysHeld();
 
         if (down & KEY_SELECT) break;
 
@@ -226,7 +277,8 @@ int main(void) {
             render_title();
             if (down & KEY_START) start_game();
         } else if (gameState == 1) {
-            int dx = 0, dy = 0;
+            int dx = 0;
+            int dy = 0;
             if (down & KEY_UP) dy = -1;
             else if (down & KEY_DOWN) dy = 1;
             else if (down & KEY_LEFT) dx = -1;
@@ -243,10 +295,8 @@ int main(void) {
 
             tickCount++;
             if (tickCount % 180 == 0 && gameState == 1) {
-                int driftX = (rand() % 3) - 1;
-                int driftY = (rand() % 3) - 1;
-                stormX = clampi(stormX + driftX, 0, GRID_W - 1);
-                stormY = clampi(stormY + driftY, 0, GRID_H - 1);
+                stormX = clampi(stormX + (rand() % 3) - 1, 0, GRID_W - 1);
+                stormY = clampi(stormY + (rand() % 3) - 1, 0, GRID_H - 1);
                 say("Radar update: storm cell has shifted.");
             }
             if (messageTimer > 0) messageTimer--;
@@ -260,7 +310,6 @@ int main(void) {
         gfxFlushBuffers();
         gfxSwapBuffers();
         gspWaitForVBlank();
-        svcSleepThread(16 * 1000 * 1000LL);
     }
 
     gfxExit();

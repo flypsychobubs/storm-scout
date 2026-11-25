@@ -6,7 +6,7 @@ ifeq ($(strip $(DEVKITPRO)),)
 $(error "DEVKITPRO is not set. Please set DEVKITPRO in your environment. export DEVKITPRO=/path/to/devkitPro")
 endif
 
-include $(DEVKITPRO)/用/devkitARM/3ds_rules
+include $(DEVKITPRO)/devkitARM/3ds_rules
 
 TARGET := StormScout
 BUILD := build
